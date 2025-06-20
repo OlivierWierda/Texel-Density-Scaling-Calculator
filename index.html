@@ -148,7 +148,7 @@
 <body>
     <div class="calculator">
         <h1>Texel Density Scale Calculator</h1>
-        <p class="subtitle">Calculate scaling to match target density between different mesh sizes</p>
+        <p class="subtitle">Calculate scaling to achieve target density when changing mesh sizes</p>
         
         <div class="input-group">
             <label for="currentDensity">Current Texture Density (px/cm):</label>
@@ -157,12 +157,7 @@
         
         <div class="input-group">
             <label for="currentResolution">Current Texture Resolution (pixels):</label>
-            <input type="number" id="currentResolution" step="1" min="1" placeholder="e.g. 8096" value="">
-        </div>
-        
-        <div class="input-group">
-            <label for="currentMeshSize">Current Mesh Size (meters):</label>
-            <input type="number" id="currentMeshSize" step="0.1" min="0.1" placeholder="e.g. 19.75" value="">
+            <input type="number" id="currentResolution" step="1" min="1" placeholder="e.g. 8192" value="">
         </div>
         
         <div class="input-group">
@@ -172,12 +167,12 @@
         
         <div class="input-group">
             <label for="targetDensity">Target Density (px/cm):</label>
-            <input type="number" id="targetDensity" step="0.01" min="0.01" placeholder="e.g. 2.05" value="2.05">
+            <input type="number" id="targetDensity" step="0.01" min="0.01" placeholder="e.g. 2.05" value="">
         </div>
         
         <div class="input-group">
             <label for="targetResolution">Target Resolution (pixels) - for comparison:</label>
-            <input type="number" id="targetResolution" step="1" min="1" placeholder="e.g. 2048" value="2048">
+            <input type="number" id="targetResolution" step="1" min="1" placeholder="e.g. 2048" value="">
         </div>
         
         <div id="results" class="result" style="display: none;">
@@ -191,6 +186,10 @@
             
             <div class="texture-sizes">
                 <h4 style="margin: 0 0 10px 0; color: #4a5568;">Results:</h4>
+                <div class="size-row" style="font-size: 12px; color: #718096; margin-bottom: 12px;">
+                    <span class="size-label">Calculated current mesh size:</span>
+                    <span class="size-value" id="calculatedMeshSize">-</span>
+                </div>
                 <div class="size-row">
                     <span class="size-label">Resultant resolution:</span>
                     <span class="size-value" id="resultantResolution">-</span>
@@ -214,7 +213,7 @@
             </div>
             
             <div class="info-box">
-                <strong>How it works:</strong> The scale factor is calculated to achieve the target density when applying the texture to the target mesh size. The formula accounts for how texture density changes with mesh size: Scale = (Target Density × Target Mesh Size) ÷ (Current Density × Current Mesh Size)
+                <strong>How it works:</strong> The calculator derives the current mesh size from your texture resolution and density (mesh size = resolution ÷ (density × 100)). Then it calculates the scale factor needed to achieve your target density on the target mesh size.
             </div>
         </div>
     </div>
@@ -222,7 +221,6 @@
     <script>
         const currentDensityInput = document.getElementById('currentDensity');
         const currentResolutionInput = document.getElementById('currentResolution');
-        const currentMeshSizeInput = document.getElementById('currentMeshSize');
         const targetMeshSizeInput = document.getElementById('targetMeshSize');
         const targetDensityInput = document.getElementById('targetDensity');
         const targetResolutionInput = document.getElementById('targetResolution');
@@ -236,21 +234,27 @@
         const resolutionDifference = document.getElementById('resolutionDifference');
         const differencePercent = document.getElementById('differencePercent');
         const differenceRow = document.getElementById('differenceRow');
+        const calculatedMeshSize = document.getElementById('calculatedMeshSize');
         
         function calculateScale() {
             const currentDensity = parseFloat(currentDensityInput.value);
             const currentResolution = parseFloat(currentResolutionInput.value);
-            const currentMeshSize = parseFloat(currentMeshSizeInput.value);
             const targetMeshSize = parseFloat(targetMeshSizeInput.value);
             const targetDensity = parseFloat(targetDensityInput.value);
             const targetResolution = parseFloat(targetResolutionInput.value);
             
             if (!currentDensity || currentDensity <= 0 || !currentResolution || currentResolution <= 0 || 
-                !currentMeshSize || currentMeshSize <= 0 || !targetMeshSize || targetMeshSize <= 0 || 
+                !targetMeshSize || targetMeshSize <= 0 || 
                 !targetDensity || targetDensity <= 0 || !targetResolution || targetResolution <= 0) {
                 resultsDiv.style.display = 'none';
                 return;
             }
+            
+            // Calculate the implicit current mesh size from resolution and density
+            // density = resolution / (mesh_size_in_cm)
+            // mesh_size_in_cm = resolution / density
+            // mesh_size_in_meters = resolution / (density * 100)
+            const currentMeshSize = currentResolution / (currentDensity * 100);
             
             // Calculate the scale factor needed to achieve target density
             // Formula: target_density = (current_density * scale_factor * current_mesh_size) / target_mesh_size
@@ -288,6 +292,7 @@
             }
             
             // Update results
+            calculatedMeshSize.textContent = `${currentMeshSize.toFixed(2)} meters`;
             resultantResolution.textContent = `${resultantRes}×${resultantRes}`;
             achievedDensity.textContent = `${verifiedDensity.toFixed(2)} px/cm (matches target)`;
             targetRes.textContent = `${targetResolution}×${targetResolution}`;
@@ -316,8 +321,6 @@
         currentDensityInput.addEventListener('change', calculateScale);
         currentResolutionInput.addEventListener('input', calculateScale);
         currentResolutionInput.addEventListener('change', calculateScale);
-        currentMeshSizeInput.addEventListener('input', calculateScale);
-        currentMeshSizeInput.addEventListener('change', calculateScale);
         targetMeshSizeInput.addEventListener('input', calculateScale);
         targetMeshSizeInput.addEventListener('change', calculateScale);
         targetDensityInput.addEventListener('input', calculateScale);
