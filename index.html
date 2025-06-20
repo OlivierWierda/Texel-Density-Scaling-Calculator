@@ -3,37 +3,100 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Texel Density Scale Calculator</title>
+    <title>Texture Scaling Calculator</title>
     <style>
-        body {
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-            max-width: 600px;
-            margin: 40px auto;
-            padding: 20px;
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-            min-height: 100vh;
-            color: #333;
+        :root {
+            --primary: #5D3F6A;
+            --secondary: #9B59B6;
+            --accent: #E74C3C;
+            --success: #2ECC71;
+            --warning: #F39C12;
+            --light: #F5EEF8;
+            --dark: #4A235A;
+            --text: #333;
+            --border: #C39BD3;
+            --card-bg: #ffffff;
+            --shadow: rgba(0, 0, 0, 0.1);
         }
         
-        .calculator {
-            background: white;
-            border-radius: 15px;
-            padding: 30px;
-            box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+        
+        body {
+            background: linear-gradient(135deg, #4A235A, #6C3483, #8E44AD);
+            color: var(--text);
+            min-height: 100vh;
+            padding: 20px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+        
+        .container {
+            max-width: 900px;
+            width: 100%;
+            background: rgba(255, 255, 255, 0.95);
+            border-radius: 20px;
+            box-shadow: 0 15px 30px rgba(0, 0, 0, 0.3);
+            overflow: hidden;
+        }
+        
+        header {
+            background: linear-gradient(to right, var(--dark), var(--primary));
+            color: white;
+            padding: 25px;
+            text-align: center;
+            position: relative;
         }
         
         h1 {
-            text-align: center;
-            color: #4a5568;
+            font-size: 2.5rem;
             margin-bottom: 10px;
-            font-size: 24px;
+            letter-spacing: 1px;
         }
         
         .subtitle {
-            text-align: center;
-            color: #718096;
-            margin-bottom: 30px;
-            font-size: 14px;
+            font-size: 1.1rem;
+            opacity: 0.9;
+            max-width: 600px;
+            margin: 0 auto;
+        }
+        
+        .content {
+            display: flex;
+            flex-wrap: wrap;
+            padding: 30px;
+            gap: 20px;
+        }
+        
+        .input-section {
+            flex: 1;
+            min-width: 300px;
+            padding: 20px;
+            background: #f9f9f9;
+            border-radius: 15px;
+            box-shadow: inset 0 0 10px rgba(157, 106, 177, 0.2);
+        }
+        
+        .result-section {
+            flex: 1;
+            min-width: 300px;
+            padding: 20px;
+            background: #f9f9f9;
+            border-radius: 15px;
+            box-shadow: inset 0 0 10px rgba(157, 106, 177, 0.2);
+        }
+        
+        .section-title {
+            font-size: 1.5rem;
+            margin-bottom: 20px;
+            color: var(--primary);
+            border-bottom: 2px solid var(--secondary);
+            padding-bottom: 10px;
         }
         
         .input-group {
@@ -44,292 +107,355 @@
             display: block;
             margin-bottom: 8px;
             font-weight: 600;
-            color: #4a5568;
+            color: var(--primary);
+            font-size: 1.1rem;
+        }
+        
+        .input-container {
+            position: relative;
+            display: flex;
         }
         
         input {
             width: 100%;
-            padding: 12px;
-            border: 2px solid #e2e8f0;
-            border-radius: 8px;
-            font-size: 16px;
-            transition: border-color 0.3s ease;
-            box-sizing: border-box;
+            padding: 14px 15px;
+            border: 2px solid var(--border);
+            border-radius: 10px;
+            font-size: 1.1rem;
+            transition: all 0.3s;
+            background: white;
         }
         
         input:focus {
             outline: none;
-            border-color: #667eea;
-            box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+            border-color: var(--secondary);
+            box-shadow: 0 0 0 3px rgba(155, 89, 182, 0.2);
         }
         
-        .result {
-            background: #f7fafc;
+        .unit {
+            position: absolute;
+            right: 10px;
+            top: 50%;
+            transform: translateY(-50%);
+            color: #777;
+            font-size: 0.9rem;
+            background: #f0f0f0;
+            padding: 2px 8px;
+            border-radius: 5px;
+        }
+        
+        .result-card {
+            background: white;
             border-radius: 10px;
             padding: 20px;
-            margin-top: 20px;
-            border-left: 4px solid #667eea;
+            margin-bottom: 20px;
+            box-shadow: 0 5px 15px var(--shadow);
+            border-left: 5px solid var(--secondary);
+            transition: all 0.3s ease;
         }
         
-        .scale-factor {
-            font-size: 24px;
-            font-weight: bold;
-            color: #2d3748;
-            margin-bottom: 10px;
+        .result-card.highlight {
+            transform: scale(1.02);
+            box-shadow: 0 8px 20px rgba(0, 0, 0, 0.15);
         }
         
-        .scale-type {
-            padding: 6px 12px;
-            border-radius: 20px;
-            font-size: 12px;
+        .result-title {
             font-weight: 600;
-            text-transform: uppercase;
-            letter-spacing: 0.5px;
-            display: inline-block;
-            margin-bottom: 15px;
-        }
-        
-        .upscale {
-            background: #fed7d7;
-            color: #c53030;
-        }
-        
-        .downscale {
-            background: #c6f6d5;
-            color: #2f855a;
-        }
-        
-        .texture-sizes {
-            margin-top: 15px;
-            padding-top: 15px;
-            border-top: 1px solid #e2e8f0;
-        }
-        
-        .size-row {
-            display: flex;
-            justify-content: space-between;
             margin-bottom: 8px;
-            font-size: 14px;
+            color: var(--primary);
+            font-size: 1.1rem;
         }
         
-        .size-label {
-            font-weight: 600;
-            color: #4a5568;
+        .result-value {
+            font-size: 1.8rem;
+            font-weight: 700;
+            color: var(--primary);
+            transition: color 0.3s;
         }
         
-        .size-value {
-            color: #718096;
+        .positive {
+            color: var(--success);
         }
         
-        .difference-row {
-            background: #fff5f5;
-            padding: 10px;
-            border-radius: 8px;
-            margin-top: 10px;
-            border: 1px solid #feb2b2;
+        .negative {
+            color: var(--accent);
         }
         
-        .difference-positive {
-            background: #f0fff4;
-            border-color: #9ae6b4;
+        .analysis-section {
+            background: white;
+            border-radius: 10px;
+            padding: 20px;
+            box-shadow: 0 5px 15px var(--shadow);
+            margin-bottom: 20px;
         }
         
-        .info-box {
-            background: #e6fffa;
-            border: 1px solid #81e6d9;
-            border-radius: 8px;
-            padding: 12px;
+        .analysis-content {
+            padding: 15px;
+            background: rgba(245, 238, 248, 0.5);
+            border-radius: 10px;
             margin-top: 15px;
-            font-size: 13px;
-            color: #234e52;
+            font-size: 1.1rem;
+            line-height: 1.6;
+        }
+        
+        .percentage-card {
+            border-left: 5px solid var(--warning);
+        }
+        
+        .error-message {
+            color: var(--accent);
+            font-weight: 600;
+            padding: 15px;
+            background: rgba(231, 76, 60, 0.1);
+            border-radius: 10px;
+            margin-top: 20px;
+            display: none;
+        }
+        
+        footer {
+            text-align: center;
+            padding: 20px;
+            background: var(--dark);
+            color: rgba(255, 255, 255, 0.7);
+            font-size: 0.9rem;
+        }
+        
+        .recommendation {
+            margin-top: 15px;
+            padding: 12px;
+            border-radius: 8px;
+            font-weight: 600;
+        }
+        
+        .crop-recommendation {
+            background: rgba(231, 76, 60, 0.1);
+            border-left: 4px solid var(--accent);
+        }
+        
+        .expand-recommendation {
+            background: rgba(46, 204, 113, 0.1);
+            border-left: 4px solid var(--success);
+        }
+        
+        @media (max-width: 768px) {
+            .content {
+                flex-direction: column;
+            }
+            
+            .input-section, .result-section {
+                min-width: 100%;
+            }
+            
+            h1 {
+                font-size: 2rem;
+            }
         }
     </style>
 </head>
 <body>
-    <div class="calculator">
-        <h1>Texel Density Scale Calculator</h1>
-        <p class="subtitle">Calculate scaling to achieve target density when changing mesh sizes</p>
+    <div class="container">
+        <header>
+            <h1>Texture Scaling Calculator</h1>
+            <p class="subtitle">Calculate optimal texture scaling for target density requirements</p>
+        </header>
         
-        <div class="input-group">
-            <label for="currentDensity">Current Texture Density (px/cm):</label>
-            <input type="number" id="currentDensity" step="0.01" min="0.01" placeholder="e.g. 4.1" value="">
-        </div>
-        
-        <div class="input-group">
-            <label for="currentResolution">Current Texture Resolution (pixels):</label>
-            <input type="number" id="currentResolution" step="1" min="1" placeholder="e.g. 8192" value="">
-        </div>
-        
-        <div class="input-group">
-            <label for="targetMeshSize">Target Mesh Size (meters):</label>
-            <input type="number" id="targetMeshSize" step="0.1" min="0.1" placeholder="e.g. 10" value="">
-        </div>
-        
-        <div class="input-group">
-            <label for="targetDensity">Target Density (px/cm):</label>
-            <input type="number" id="targetDensity" step="0.01" min="0.01" placeholder="e.g. 2.05" value="">
-        </div>
-        
-        <div class="input-group">
-            <label for="targetResolution">Target Resolution (pixels) - for comparison:</label>
-            <input type="number" id="targetResolution" step="1" min="1" placeholder="e.g. 2048" value="">
-        </div>
-        
-        <div id="results" class="result" style="display: none;">
-            <div class="scale-factor">
-                Scale Factor: <span id="scaleFactor">1.00</span>
-            </div>
-            <div class="scale-type" id="scaleType">Equal</div>
-            <div>
-                <strong>Percentage:</strong> <span id="percentage">100%</span>
-            </div>
-            
-            <div class="texture-sizes">
-                <h4 style="margin: 0 0 10px 0; color: #4a5568;">Results:</h4>
-                <div class="size-row" style="font-size: 12px; color: #718096; margin-bottom: 12px;">
-                    <span class="size-label">Calculated current mesh size:</span>
-                    <span class="size-value" id="calculatedMeshSize">-</span>
-                </div>
-                <div class="size-row">
-                    <span class="size-label">Resultant resolution:</span>
-                    <span class="size-value" id="resultantResolution">-</span>
-                </div>
-                <div class="size-row">
-                    <span class="size-label">Achieved density:</span>
-                    <span class="size-value" id="achievedDensity">-</span>
-                </div>
-                <div class="size-row">
-                    <span class="size-label">Target resolution:</span>
-                    <span class="size-value" id="targetRes">-</span>
+        <div class="content">
+            <div class="input-section">
+                <h2 class="section-title">Input Parameters</h2>
+                
+                <div class="input-group">
+                    <label for="current-density">Current Texture Density</label>
+                    <div class="input-container">
+                        <input type="number" id="current-density" min="0.01" step="0.01" placeholder="e.g. 4.1" value="4.1">
+                        <span class="unit">px/cm</span>
+                    </div>
                 </div>
                 
-                <div class="difference-row" id="differenceRow">
-                    <div style="text-align: center;">
-                        <strong>Resolution Difference:</strong><br>
-                        <span id="resolutionDifference" style="font-size: 18px; font-weight: bold;">-</span><br>
-                        <span id="differencePercent" style="font-size: 14px; color: #718096;">-</span>
+                <div class="input-group">
+                    <label for="current-resolution">Current Texture Resolution (Side Length)</label>
+                    <div class="input-container">
+                        <input type="number" id="current-resolution" min="1" step="1" placeholder="e.g. 8192" value="8192">
+                        <span class="unit">pixels</span>
+                    </div>
+                </div>
+                
+                <div class="input-group">
+                    <label for="target-density">Target Density</label>
+                    <div class="input-container">
+                        <input type="number" id="target-density" min="0.01" step="0.01" placeholder="e.g. 2.05" value="2.05">
+                        <span class="unit">px/cm</span>
+                    </div>
+                </div>
+                
+                <div class="input-group">
+                    <label for="target-resolution">Target Resolution (For Comparison)</label>
+                    <div class="input-container">
+                        <input type="number" id="target-resolution" min="1" step="1" placeholder="e.g. 2048" value="2048">
+                        <span class="unit">pixels</span>
+                    </div>
+                </div>
+                
+                <div class="error-message" id="error-message">
+                    Please enter valid positive numbers for all fields. Current density must be greater than zero.
+                </div>
+            </div>
+            
+            <div class="result-section">
+                <h2 class="section-title">Calculation Results</h2>
+                
+                <div class="result-card" id="scaling-factor-card">
+                    <div class="result-title">Scaling Factor</div>
+                    <div class="result-value" id="scaling-factor">0.50</div>
+                </div>
+                
+                <div class="result-card" id="output-resolution-card">
+                    <div class="result-title">Output Resolution (Side Length)</div>
+                    <div class="result-value" id="output-resolution">4096.00 pixels</div>
+                </div>
+                
+                <div class="result-card" id="difference-card">
+                    <div class="result-title">Resolution Difference (Output - Target)</div>
+                    <div class="result-value positive" id="resolution-difference">2048.00 pixels</div>
+                </div>
+                
+                <div class="result-card percentage-card" id="ratio-card">
+                    <div class="result-title">Output to Target Ratio</div>
+                    <div class="result-value" id="resolution-ratio">200.00%</div>
+                </div>
+                
+                <div class="analysis-section">
+                    <h2 class="section-title">Analysis & Recommendations</h2>
+                    <div class="analysis-content">
+                        <p><strong>Resolution Difference Analysis:</strong></p>
+                        <div class="recommendation crop-recommendation" id="crop-recommendation">
+                            <strong>Cropping Needed:</strong> The output resolution is larger than the target. 
+                            To achieve the target resolution with the target density, you'll need to crop the texture.
+                        </div>
+                        <div class="recommendation expand-recommendation" id="expand-recommendation" style="display:none;">
+                            <strong>Expansion Needed:</strong> The output resolution is smaller than the target. 
+                            To achieve the target resolution with the target density, you'll need to expand the texture.
+                        </div>
+                        
+                        <p style="margin-top: 15px;"><strong>Ratio Interpretation:</strong></p>
+                        <ul style="padding-left: 20px; margin-top: 10px;">
+                            <li><strong>&gt; 100%</strong>: Output is larger than target (cropping needed)</li>
+                            <li><strong>&lt; 100%</strong>: Output is smaller than target (expansion needed)</li>
+                            <li><strong>100%</strong>: Perfect match between output and target</li>
+                        </ul>
                     </div>
                 </div>
             </div>
-            
-            <div class="info-box">
-                <strong>How it works:</strong> The calculator derives the current mesh size from your texture resolution and density (mesh size = resolution ÷ (density × 100)). Then it calculates the scale factor needed to achieve your target density on the target mesh size.
-            </div>
         </div>
+        
+        <footer>
+            <p>Texture Scaling Calculator | Texture Analysis Tool</p>
+        </footer>
     </div>
 
     <script>
-        const currentDensityInput = document.getElementById('currentDensity');
-        const currentResolutionInput = document.getElementById('currentResolution');
-        const targetMeshSizeInput = document.getElementById('targetMeshSize');
-        const targetDensityInput = document.getElementById('targetDensity');
-        const targetResolutionInput = document.getElementById('targetResolution');
-        const resultsDiv = document.getElementById('results');
-        const scaleFactorSpan = document.getElementById('scaleFactor');
-        const scaleTypeDiv = document.getElementById('scaleType');
-        const percentageSpan = document.getElementById('percentage');
-        const resultantResolution = document.getElementById('resultantResolution');
-        const achievedDensity = document.getElementById('achievedDensity');
-        const targetRes = document.getElementById('targetRes');
-        const resolutionDifference = document.getElementById('resolutionDifference');
-        const differencePercent = document.getElementById('differencePercent');
-        const differenceRow = document.getElementById('differenceRow');
-        const calculatedMeshSize = document.getElementById('calculatedMeshSize');
-        
-        function calculateScale() {
-            const currentDensity = parseFloat(currentDensityInput.value);
-            const currentResolution = parseFloat(currentResolutionInput.value);
-            const targetMeshSize = parseFloat(targetMeshSizeInput.value);
-            const targetDensity = parseFloat(targetDensityInput.value);
-            const targetResolution = parseFloat(targetResolutionInput.value);
+        document.addEventListener('DOMContentLoaded', function() {
+            // Get DOM elements
+            const currentDensityInput = document.getElementById('current-density');
+            const currentResolutionInput = document.getElementById('current-resolution');
+            const targetDensityInput = document.getElementById('target-density');
+            const targetResolutionInput = document.getElementById('target-resolution');
+            const errorMessage = document.getElementById('error-message');
             
-            if (!currentDensity || currentDensity <= 0 || !currentResolution || currentResolution <= 0 || 
-                !targetMeshSize || targetMeshSize <= 0 || 
-                !targetDensity || targetDensity <= 0 || !targetResolution || targetResolution <= 0) {
-                resultsDiv.style.display = 'none';
-                return;
+            const scalingFactorResult = document.getElementById('scaling-factor');
+            const outputResolutionResult = document.getElementById('output-resolution');
+            const resolutionDifferenceResult = document.getElementById('resolution-difference');
+            const resolutionRatioResult = document.getElementById('resolution-ratio');
+            
+            const cropRecommendation = document.getElementById('crop-recommendation');
+            const expandRecommendation = document.getElementById('expand-recommendation');
+            
+            // Add event listeners to all inputs
+            const inputs = [currentDensityInput, currentResolutionInput, targetDensityInput, targetResolutionInput];
+            inputs.forEach(input => {
+                input.addEventListener('input', calculate);
+            });
+            
+            // Initial calculation
+            calculate();
+            
+            // Main calculation function
+            function calculate() {
+                // Hide error message initially
+                errorMessage.style.display = 'none';
+                
+                // Get input values
+                const currentDensity = parseFloat(currentDensityInput.value);
+                const currentResolution = parseFloat(currentResolutionInput.value);
+                const targetDensity = parseFloat(targetDensityInput.value);
+                const targetResolution = parseFloat(targetResolutionInput.value);
+                
+                // Check if all inputs have values
+                if (isNaN(currentDensity) || 
+                    isNaN(currentResolution) || 
+                    isNaN(targetDensity) || 
+                    isNaN(targetResolution)) {
+                    return;
+                }
+                
+                // Validate inputs
+                if (currentDensity <= 0) {
+                    showError("Current density must be greater than zero");
+                    return;
+                }
+                
+                if (currentResolution <= 0 || targetResolution <= 0) {
+                    showError("Resolution values must be positive");
+                    return;
+                }
+                
+                // Perform calculations
+                const scalingFactor = targetDensity / currentDensity;
+                const outputResolution = currentResolution * scalingFactor;
+                const resolutionDifference = outputResolution - targetResolution;
+                const resolutionRatio = (outputResolution / targetResolution) * 100;
+                
+                // Display results
+                scalingFactorResult.textContent = scalingFactor.toFixed(2);
+                outputResolutionResult.textContent = outputResolution.toFixed(2) + " pixels";
+                
+                // Format difference with color coding
+                resolutionDifferenceResult.textContent = resolutionDifference.toFixed(2) + " pixels";
+                if (resolutionDifference > 0) {
+                    resolutionDifferenceResult.className = "result-value positive";
+                } else if (resolutionDifference < 0) {
+                    resolutionDifferenceResult.className = "result-value negative";
+                } else {
+                    resolutionDifferenceResult.className = "result-value";
+                }
+                
+                // Display ratio
+                resolutionRatioResult.textContent = resolutionRatio.toFixed(2) + "%";
+                
+                // Update recommendations
+                if (resolutionDifference > 0) {
+                    cropRecommendation.style.display = "block";
+                    expandRecommendation.style.display = "none";
+                } else if (resolutionDifference < 0) {
+                    cropRecommendation.style.display = "none";
+                    expandRecommendation.style.display = "block";
+                } else {
+                    cropRecommendation.style.display = "none";
+                    expandRecommendation.style.display = "none";
+                }
             }
             
-            // Calculate the implicit current mesh size from resolution and density
-            // density = resolution / (mesh_size_in_cm)
-            // mesh_size_in_cm = resolution / density
-            // mesh_size_in_meters = resolution / (density * 100)
-            const currentMeshSize = currentResolution / (currentDensity * 100);
-            
-            // Calculate the scale factor needed to achieve target density
-            // Formula: target_density = (current_density * scale_factor * current_mesh_size) / target_mesh_size
-            // Solving for scale_factor: scale_factor = (target_density * target_mesh_size) / (current_density * current_mesh_size)
-            const scaleFactor = (targetDensity * targetMeshSize) / (currentDensity * currentMeshSize);
-            
-            // Calculate the resultant resolution after scaling
-            const resultantRes = Math.round(currentResolution * scaleFactor);
-            
-            // Verify the achieved density (should equal target density)
-            const verifiedDensity = (currentDensity * scaleFactor * currentMeshSize) / targetMeshSize;
-            
-            // Calculate difference between resultant and target resolution
-            const resDifference = resultantRes - targetResolution;
-            const resDifferencePercent = ((resultantRes - targetResolution) / targetResolution) * 100;
-            
-            const percentage = scaleFactor * 100;
-            
-            // Update scale factor
-            scaleFactorSpan.textContent = scaleFactor.toFixed(4);
-            percentageSpan.textContent = percentage.toFixed(1) + '%';
-            
-            // Update scale type
-            if (scaleFactor > 1) {
-                scaleTypeDiv.textContent = 'Upscale';
-                scaleTypeDiv.className = 'scale-type upscale';
-            } else if (scaleFactor < 1) {
-                scaleTypeDiv.textContent = 'Downscale';
-                scaleTypeDiv.className = 'scale-type downscale';
-            } else {
-                scaleTypeDiv.textContent = 'No Change';
-                scaleTypeDiv.className = 'scale-type';
-                scaleTypeDiv.style.background = '#e2e8f0';
-                scaleTypeDiv.style.color = '#4a5568';
+            function showError(message) {
+                errorMessage.textContent = message;
+                errorMessage.style.display = 'block';
+                
+                // Reset results
+                scalingFactorResult.textContent = '-';
+                outputResolutionResult.textContent = '-';
+                resolutionDifferenceResult.textContent = '-';
+                resolutionRatioResult.textContent = '-';
+                resolutionDifferenceResult.className = "result-value";
             }
-            
-            // Update results
-            calculatedMeshSize.textContent = `${currentMeshSize.toFixed(2)} meters`;
-            resultantResolution.textContent = `${resultantRes}×${resultantRes}`;
-            achievedDensity.textContent = `${verifiedDensity.toFixed(2)} px/cm (matches target)`;
-            targetRes.textContent = `${targetResolution}×${targetResolution}`;
-            
-            // Update difference display
-            if (resDifference > 0) {
-                resolutionDifference.textContent = `+${resDifference} pixels`;
-                resolutionDifference.style.color = '#2f855a';
-                differenceRow.className = 'difference-row difference-positive';
-            } else if (resDifference < 0) {
-                resolutionDifference.textContent = `${resDifference} pixels`;
-                resolutionDifference.style.color = '#c53030';
-                differenceRow.className = 'difference-row';
-            } else {
-                resolutionDifference.textContent = 'Perfect match!';
-                resolutionDifference.style.color = '#2f855a';
-                differenceRow.className = 'difference-row difference-positive';
-            }
-            
-            differencePercent.textContent = `(${resDifferencePercent > 0 ? '+' : ''}${resDifferencePercent.toFixed(1)}% from target)`;
-            
-            resultsDiv.style.display = 'block';
-        }
-        
-        currentDensityInput.addEventListener('input', calculateScale);
-        currentDensityInput.addEventListener('change', calculateScale);
-        currentResolutionInput.addEventListener('input', calculateScale);
-        currentResolutionInput.addEventListener('change', calculateScale);
-        targetMeshSizeInput.addEventListener('input', calculateScale);
-        targetMeshSizeInput.addEventListener('change', calculateScale);
-        targetDensityInput.addEventListener('input', calculateScale);
-        targetDensityInput.addEventListener('change', calculateScale);
-        targetResolutionInput.addEventListener('input', calculateScale);
-        targetResolutionInput.addEventListener('change', calculateScale);
-        
-        // Auto-focus the input
-        currentDensityInput.focus();
+        });
     </script>
 </body>
 </html>
