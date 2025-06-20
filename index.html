@@ -121,23 +121,34 @@
             color: #718096;
         }
         
-        .target-info {
-            background: #edf2f7;
+        .difference-row {
+            background: #fff5f5;
+            padding: 10px;
             border-radius: 8px;
-            padding: 15px;
-            margin-bottom: 20px;
-            text-align: center;
+            margin-top: 10px;
+            border: 1px solid #feb2b2;
         }
         
-        .target-info strong {
-            color: #2d3748;
+        .difference-positive {
+            background: #f0fff4;
+            border-color: #9ae6b4;
+        }
+        
+        .info-box {
+            background: #e6fffa;
+            border: 1px solid #81e6d9;
+            border-radius: 8px;
+            padding: 12px;
+            margin-top: 15px;
+            font-size: 13px;
+            color: #234e52;
         }
     </style>
 </head>
 <body>
     <div class="calculator">
         <h1>Texel Density Scale Calculator</h1>
-        <p class="subtitle">Calculate scaling factor between any texture densities and resolutions</p>
+        <p class="subtitle">Calculate scaling to match target density between different mesh sizes</p>
         
         <div class="input-group">
             <label for="currentDensity">Current Texture Density (px/cm):</label>
@@ -147,6 +158,11 @@
         <div class="input-group">
             <label for="currentResolution">Current Texture Resolution (pixels):</label>
             <input type="number" id="currentResolution" step="1" min="1" placeholder="e.g. 8096" value="">
+        </div>
+        
+        <div class="input-group">
+            <label for="currentMeshSize">Current Mesh Size (meters):</label>
+            <input type="number" id="currentMeshSize" step="0.1" min="0.1" placeholder="e.g. 19.75" value="">
         </div>
         
         <div class="input-group">
@@ -160,7 +176,7 @@
         </div>
         
         <div class="input-group">
-            <label for="targetResolution">Target Resolution (pixels):</label>
+            <label for="targetResolution">Target Resolution (pixels) - for comparison:</label>
             <input type="number" id="targetResolution" step="1" min="1" placeholder="e.g. 2048" value="2048">
         </div>
         
@@ -176,19 +192,29 @@
             <div class="texture-sizes">
                 <h4 style="margin: 0 0 10px 0; color: #4a5568;">Results:</h4>
                 <div class="size-row">
-                    <span class="size-label">Your texture scaled to:</span>
-                    <span class="size-value" id="currentScaled">-</span>
+                    <span class="size-label">Resultant resolution:</span>
+                    <span class="size-value" id="resultantResolution">-</span>
+                </div>
+                <div class="size-row">
+                    <span class="size-label">Achieved density:</span>
+                    <span class="size-value" id="achievedDensity">-</span>
                 </div>
                 <div class="size-row">
                     <span class="size-label">Target resolution:</span>
-                    <span class="size-value" id="targetAchieved">-</span>
+                    <span class="size-value" id="targetRes">-</span>
                 </div>
-                <div style="margin-top: 15px; padding-top: 15px; border-top: 1px solid #e2e8f0;">
-                    <div class="size-row">
-                        <span class="size-label">Resolution analysis:</span>
-                        <span class="size-value" id="neededSource" style="font-size: 12px; line-height: 1.4;">-</span>
+                
+                <div class="difference-row" id="differenceRow">
+                    <div style="text-align: center;">
+                        <strong>Resolution Difference:</strong><br>
+                        <span id="resolutionDifference" style="font-size: 18px; font-weight: bold;">-</span><br>
+                        <span id="differencePercent" style="font-size: 14px; color: #718096;">-</span>
                     </div>
                 </div>
+            </div>
+            
+            <div class="info-box">
+                <strong>How it works:</strong> The scale factor is calculated to achieve the target density when applying the texture to the target mesh size. The formula accounts for how texture density changes with mesh size: Scale = (Target Density × Target Mesh Size) ÷ (Current Density × Current Mesh Size)
             </div>
         </div>
     </div>
@@ -196,6 +222,7 @@
     <script>
         const currentDensityInput = document.getElementById('currentDensity');
         const currentResolutionInput = document.getElementById('currentResolution');
+        const currentMeshSizeInput = document.getElementById('currentMeshSize');
         const targetMeshSizeInput = document.getElementById('targetMeshSize');
         const targetDensityInput = document.getElementById('targetDensity');
         const targetResolutionInput = document.getElementById('targetResolution');
@@ -203,29 +230,43 @@
         const scaleFactorSpan = document.getElementById('scaleFactor');
         const scaleTypeDiv = document.getElementById('scaleType');
         const percentageSpan = document.getElementById('percentage');
-        const currentScaled = document.getElementById('currentScaled');
-        const targetAchieved = document.getElementById('targetAchieved');
-        const neededSource = document.getElementById('neededSource');
+        const resultantResolution = document.getElementById('resultantResolution');
+        const achievedDensity = document.getElementById('achievedDensity');
+        const targetRes = document.getElementById('targetRes');
+        const resolutionDifference = document.getElementById('resolutionDifference');
+        const differencePercent = document.getElementById('differencePercent');
+        const differenceRow = document.getElementById('differenceRow');
         
         function calculateScale() {
             const currentDensity = parseFloat(currentDensityInput.value);
             const currentResolution = parseFloat(currentResolutionInput.value);
+            const currentMeshSize = parseFloat(currentMeshSizeInput.value);
             const targetMeshSize = parseFloat(targetMeshSizeInput.value);
             const targetDensity = parseFloat(targetDensityInput.value);
             const targetResolution = parseFloat(targetResolutionInput.value);
             
             if (!currentDensity || currentDensity <= 0 || !currentResolution || currentResolution <= 0 || 
-                !targetMeshSize || targetMeshSize <= 0 || !targetDensity || targetDensity <= 0 || 
-                !targetResolution || targetResolution <= 0) {
+                !currentMeshSize || currentMeshSize <= 0 || !targetMeshSize || targetMeshSize <= 0 || 
+                !targetDensity || targetDensity <= 0 || !targetResolution || targetResolution <= 0) {
                 resultsDiv.style.display = 'none';
                 return;
             }
             
-            // Calculate ideal resolution needed for perfect density
-            const idealResolution = targetDensity * (targetMeshSize * 100); // convert meters to cm
+            // Calculate the scale factor needed to achieve target density
+            // Formula: target_density = (current_density * scale_factor * current_mesh_size) / target_mesh_size
+            // Solving for scale_factor: scale_factor = (target_density * target_mesh_size) / (current_density * current_mesh_size)
+            const scaleFactor = (targetDensity * targetMeshSize) / (currentDensity * currentMeshSize);
             
-            // Calculate scale factor to reach TARGET resolution (not ideal)
-            const scaleFactor = targetResolution / currentResolution;
+            // Calculate the resultant resolution after scaling
+            const resultantRes = Math.round(currentResolution * scaleFactor);
+            
+            // Verify the achieved density (should equal target density)
+            const verifiedDensity = (currentDensity * scaleFactor * currentMeshSize) / targetMeshSize;
+            
+            // Calculate difference between resultant and target resolution
+            const resDifference = resultantRes - targetResolution;
+            const resDifferencePercent = ((resultantRes - targetResolution) / targetResolution) * 100;
+            
             const percentage = scaleFactor * 100;
             
             // Update scale factor
@@ -246,25 +287,27 @@
                 scaleTypeDiv.style.color = '#4a5568';
             }
             
-            // Calculate resulting sizes
-            const currentScaledSize = Math.round(currentResolution * scaleFactor);
-            currentScaled.textContent = `${currentScaledSize}×${currentScaledSize}`;
+            // Update results
+            resultantResolution.textContent = `${resultantRes}×${resultantRes}`;
+            achievedDensity.textContent = `${verifiedDensity.toFixed(2)} px/cm (matches target)`;
+            targetRes.textContent = `${targetResolution}×${targetResolution}`;
             
-            // Show target resolution
-            targetAchieved.textContent = `${targetResolution}×${targetResolution}`;
+            // Update difference display
+            if (resDifference > 0) {
+                resolutionDifference.textContent = `+${resDifference} pixels`;
+                resolutionDifference.style.color = '#2f855a';
+                differenceRow.className = 'difference-row difference-positive';
+            } else if (resDifference < 0) {
+                resolutionDifference.textContent = `${resDifference} pixels`;
+                resolutionDifference.style.color = '#c53030';
+                differenceRow.className = 'difference-row';
+            } else {
+                resolutionDifference.textContent = 'Perfect match!';
+                resolutionDifference.style.color = '#2f855a';
+                differenceRow.className = 'difference-row difference-positive';
+            }
             
-            // Calculate actual density achieved and show difference from ideal
-            const actualDensity = targetResolution / (targetMeshSize * 100);
-            const idealResolutionRounded = Math.round(idealResolution);
-            const resolutionDifference = targetResolution - idealResolutionRounded;
-            const densityDifference = actualDensity - targetDensity;
-            
-            let differenceText = `Ideal: ${idealResolutionRounded}×${idealResolutionRounded}, `;
-            differenceText += `Difference: ${resolutionDifference > 0 ? '+' : ''}${resolutionDifference}px, `;
-            differenceText += `Actual density: ${actualDensity.toFixed(2)} px/cm `;
-            differenceText += `(${densityDifference > 0 ? '+' : ''}${densityDifference.toFixed(2)} px/cm)`;
-            
-            neededSource.textContent = differenceText;
+            differencePercent.textContent = `(${resDifferencePercent > 0 ? '+' : ''}${resDifferencePercent.toFixed(1)}% from target)`;
             
             resultsDiv.style.display = 'block';
         }
@@ -273,6 +316,8 @@
         currentDensityInput.addEventListener('change', calculateScale);
         currentResolutionInput.addEventListener('input', calculateScale);
         currentResolutionInput.addEventListener('change', calculateScale);
+        currentMeshSizeInput.addEventListener('input', calculateScale);
+        currentMeshSizeInput.addEventListener('change', calculateScale);
         targetMeshSizeInput.addEventListener('input', calculateScale);
         targetMeshSizeInput.addEventListener('change', calculateScale);
         targetDensityInput.addEventListener('input', calculateScale);
