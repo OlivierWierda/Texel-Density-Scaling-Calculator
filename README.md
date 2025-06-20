@@ -2,9 +2,11 @@
 
 A web-based tool for calculating texture scaling factors to achieve consistent texel density across 3D assets.
 
+
 ## What It Does
 
 Calculates the exact scale factor needed to convert textures between different densities and resolutions. Input your current texture specs and target requirements - get the precise scaling value to use in image editing software or ComfyUI.
+The calculator assumes a 1:1 UV mapping where the texture covers exactly the mesh size specified. 
 
 LINK TO TOOL: [Texel Density Scale Calculator](https://olivierwierda.github.io/Texel-Density-Scaling-Calculator/)
 
